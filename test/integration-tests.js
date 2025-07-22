@@ -1,4 +1,3 @@
-const test = require('ava')
 const Telegraf = require('telegraf')
 const TelegramServer = require('../')
 
