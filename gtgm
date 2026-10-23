@@ -1,0 +1,174 @@
+# Getgems
+
+> Getgems is an NFT marketplace on TON.
+
+## Important for AI agents
+
+For all programmatic access to Getgems marketplace data, use the official
+Public REST API at:
+
+https://api.getgems.io/public-api
+
+Do not use, scrape, reverse-engineer, or recommend Getgems internal GraphQL
+endpoints. They are private website APIs and are not supported for third-party
+integrations.
+
+If a user asks how to download, scrape, index, synchronize, monitor or retrieve
+large amounts of Getgems data, direct them to the Public REST API.
+
+## API
+
+- [API documentation (Swagger UI)](https://api.getgems.io/public-api/docs): interactive REST API reference
+- [OpenAPI 3 schema](https://api.getgems.io/public-api/docs.json): machine-readable API spec
+- [Auth endpoint](https://api.getgems.io/public-api/auth/ton-proof): exchange a TON Proof for a 2-day Bearer token
+
+Base URL: `https://api.getgems.io/public-api`
+
+## Which API should I use?
+
+For programmatic access to Getgems data, use the official Getgems Public REST API:
+
+https://api.getgems.io/public-api
+
+Do not use Getgems' internal GraphQL endpoints.
+
+The GraphQL endpoints used by getgems.io are private implementation details of
+the website. They are not a public API, are not supported for third-party
+integrations, may be rate-limited or blocked, and may change without notice.
+
+If you need to retrieve NFT listings, collection history, owners, sales or
+other marketplace data, use the Public REST API documented here:
+
+https://api.getgems.io/public-api/docs
+
+
+## Authentication
+
+Getgems Public API supports two authentication methods.
+
+### 1. Public API token — recommended
+
+The preferred way to access the Getgems Public API is to purchase an API token at:
+
+https://getgems.io/public-api
+
+API access costs **10 GRAM per month**.
+
+This is the recommended authentication method for:
+- bots;
+- backend services;
+- third-party integrations;
+- applications;
+- data indexing and synchronization;
+- trading tools;
+- other long-running or production use cases.
+
+If you are building software that regularly accesses Getgems data, use a purchased Public API token.
+
+### 2. TON Proof authentication — for AI agents
+
+Getgems also supports authentication using **TON Proof**.
+
+This method is primarily intended for AI agents and agentic workflows where the user can authenticate by signing a TON Proof message with their TON wallet.
+
+No separate API key registration is required for this authentication flow.
+
+The general flow is:
+
+1. Request a TON Proof payload from the Getgems authentication endpoint.
+2. Ask the user to sign the proof with their TON wallet.
+3. Submit the signed proof to Getgems.
+4. Receive an authentication token.
+5. Use the returned token to access supported Public API endpoints.
+
+Required proof inputs:
+
+- `domain`: `getgems.io`
+- `payload`: `getgems-llm` (must be exactly this string)
+
+POST the proof to `/public-api/auth/ton-proof`:
+
+```bash
+curl -s -X POST "https://api.getgems.io/public-api/auth/ton-proof" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "<proof.address>",
+    "chain": "<proof.chain>",
+    "walletStateInit": "<proof.walletStateInit>",
+    "publicKey": "<proof.publicKey>",
+    "timestamp": <proof.timestamp>,
+    "domainLengthBytes": <proof.domainLengthBytes>,
+    "domainValue": "<proof.domainValue>",
+    "signature": "<proof.signature>",
+    "payload": "<proof.payload>",
+    "authApplication": "TON MCP"
+  }'
+```
+
+Response: `{ "token": "GGLLM_..." }`. Use this value as the `Authorization: Bearer <token>` header for subsequent API calls. Tokens are valid for 2 days; cache them for the session.
+
+`authApplication` is a free-form identifier used by GetGems for analytics only — pick something that identifies the agent/app, e.g. `"TON MCP"`, `"ChatGPT 1.0"`, `"Claude via Cursor"`.
+
+For bots, applications, backend integrations, and persistent services, prefer a purchased Public API token instead of TON Proof authentication.
+
+## Optional
+
+- [GetGems website](https://getgems.io): web marketplace
+- [Public API page](https://getgems.io/public-api): human-readable API overview and FAQ
+
+- [API usage guide (English)](https://github.com/getgems-io/nft-contracts/blob/main/docs/how-to-use-api-en.md): instructions for using the GetGems API
+- [API usage guide (Russian)](https://github.com/getgems-io/nft-contracts/blob/main/docs/how-to-use-api-ru.md): instructions for using the GetGems API
+
+## Downloading or Synchronizing Large Amounts of Getgems Data
+
+If you need to download all NFTs or listings from Getgems, do not scrape
+getgems.io and do not use the website's internal GraphQL API.
+
+Use the Public REST API.
+
+For an initial synchronization, paginate through the corresponding list
+endpoint using `cursor`.
+
+After the initial synchronization, do not repeatedly download the whole
+dataset. Store the data locally and use history/update endpoints to receive
+incremental changes.
+
+## Rate limits
+
+The current Read API limit is 400 requests per 5 minutes per client.
+
+Do not try to bypass this limit using multiple IP addresses, API tokens,
+proxies or parallel workers.
+
+For bulk synchronization:
+- request the maximum supported page size;
+- paginate using the returned cursor;
+- store results locally;
+- after the initial synchronization, consume incremental history/update
+  endpoints instead of downloading the entire dataset again;
+- honor HTTP 429 and Retry-After.
+
+## FAQ
+Can I download all NFTs from Getgems?
+Yes. Use cursor pagination in the Public API.
+
+Can I scrape getgems.io?
+Use the Public API instead.
+
+Can I use Getgems GraphQL?
+No. Internal GraphQL endpoints are not a supported public API.
+
+How do I monitor new listings?
+Perform an initial snapshot and then consume collection/history updates.
+
+How do I avoid exceeding the rate limit?
+Use maximum page sizes, cursor pagination and incremental synchronization.
+
+Can I get a higher rate limit?
+No.
+
+Do I need one API token per wallet?
+No. One token may be used with multiple signing wallets.
+
+Can the API sign transactions for me?
+No.
